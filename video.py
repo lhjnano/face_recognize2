@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import sys
 import importlib.util
-import image.ImageFace as iface # TODO 
+from image import ImageFace
 
 
 import math
@@ -15,8 +15,9 @@ from PIL import Image, ImageDraw
 from threading import Thread
 import matplotlib.pyplot as plt
 import time 
+import re
 
-
+FACES = 2
 
 # Define and parse input arguments
 parser = argparse.ArgumentParser()
@@ -34,7 +35,7 @@ args = parser.parse_args()
 
 MODEL_NAME = args.modeldir
 GRAPH_NAME = args.graph
-LABELMAP_NAME = args.labels
+
 VIDEO_NAME = args.video
 min_conf_threshold = float(args.threshold)
 
@@ -49,11 +50,11 @@ else:
 CWD_PATH = os.getcwd()
 VIDEO_PATH = os.path.join(CWD_PATH,VIDEO_NAME)
 PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
-PATH_TO_LABELS = os.path.join(CWD_PATH,MODEL_NAME,LABELMAP_NAME)
 	
 interpreter = Interpreter(model_path=PATH_TO_CKPT)
 interpreter.allocate_tensors()
 
+iface = ImageFace(interpreter)
 
 # Get model details
 input_details = interpreter.get_input_details()
@@ -71,6 +72,10 @@ video = cv2.VideoCapture(VIDEO_PATH)
 imW = video.get(cv2.CAP_PROP_FRAME_WIDTH)
 imH = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
 frames_per_second = video.get(cv2.CAP_PROP_FPS)
+
+def image_files_in_folder(folder):
+    return [os.path.join(folder, f) for f in os.listdir(folder) if re.match(r'.*\.(jpg|jpeg|png)', f, flags=re.I)]
+
 
 def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree', verbose=False):
     """
@@ -178,7 +183,7 @@ def reco_faces(image, imgW, imgH) :
 
 def predict_faces(knn_clf, image, X_face_locations) :
     #print(f'Find Faces : {X_face_locations}')
-    distance_threshold = 0.95
+    distance_threshold = 0.5
     if len(X_face_locations) == 0:
         return []
         
