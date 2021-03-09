@@ -31,6 +31,8 @@ parser.add_argument('--video', help='Name of the video file',
                     default='test.mp4')
 					
 
+
+
 args = parser.parse_args()
 
 MODEL_NAME = args.modeldir
@@ -50,11 +52,12 @@ else:
 CWD_PATH = os.getcwd()
 VIDEO_PATH = os.path.join(CWD_PATH,VIDEO_NAME)
 PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
-	
+
+
 interpreter = Interpreter(model_path=PATH_TO_CKPT)
 interpreter.allocate_tensors()
 
-iface = ImageFace(interpreter)
+iface = ImageFace(interpreter, min_conf_threshold)
 
 # Get model details
 input_details = interpreter.get_input_details()
@@ -75,6 +78,7 @@ frames_per_second = video.get(cv2.CAP_PROP_FPS)
 
 def image_files_in_folder(folder):
     return [os.path.join(folder, f) for f in os.listdir(folder) if re.match(r'.*\.(jpg|jpeg|png)', f, flags=re.I)]
+
 
 
 def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree', verbose=False):
@@ -117,7 +121,7 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
                     print("Image {} not suitable for training: {}".format(img_path, "Didn't find a face" if len(face_bounding_boxes) < 1 else "Found more than one face"))
             else:
                 # Add face encoding for current image to the training set
-                known_face = iface.face_encodings(image, face_bounding_boxes)[0]
+                known_face = iface.face_encoding(image, face_bounding_boxes)[0]
                 X.append(known_face)
                 y.append(class_dir)
 
