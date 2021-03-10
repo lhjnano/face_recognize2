@@ -102,6 +102,7 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
     :param verbose: verbosity of training
     :return: returns knn classifier that was trained on the given data.
     """
+    images = []
     X = []
     y = []
 
@@ -113,6 +114,8 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
         # Loop through each training image for the current person
         for img_path in image_files_in_folder(os.path.join(train_dir, class_dir)):
             image = iface.load_image(img_path)
+            images.append(image)
+            
             face_bounding_boxes = iface.face_locations(image)
             class_sample_image = image
             if len(face_bounding_boxes) != 1:
@@ -134,6 +137,17 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
     # Create and train the KNN classifier
     knn_clf = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm=knn_algo, weights='distance', )
     knn_clf.fit(X, y)
+    
+    red = (0,0,255)
+    plt.figure(figsize=(20, 20))
+    for i in range(len(y)):
+        known_face = X[i]
+        image = images[i]
+        for j in range(len(known_face)) :
+            point = (known_face[j][0], known_face[j][1])
+            image = cv2.line(image, point, point, red, 3)
+        plt.subplot(len(y), 1, i)
+        plt.imshow(image)
 
     # Save the trained KNN classifier
     if model_save_path is not None:
@@ -187,13 +201,13 @@ def reco_faces(image, imgW, imgH) :
 
 def predict_faces(knn_clf, image, X_face_locations) :
     #print(f'Find Faces : {X_face_locations}')
-    distance_threshold = 0.5
+    distance_threshold = 0.7
     if len(X_face_locations) == 0:
         return []
         
     #timestamp = time.time()
     # Find encodings for faces in the test iamge
-    faces_encodings = iface.face_encodings(image, X_face_locations)
+    faces_encodings = iface.face_encoding(image, X_face_locations)
     #print(f'faces_encodings : {time.time()-timestamp}s')
     # Use the KNN model to find the best matches for the test face
     closest_distances = knn_clf.kneighbors(faces_encodings, n_neighbors=FACES)
@@ -207,8 +221,6 @@ def show_prediction(image, predictions, is_showing=False) :
     #frame_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
     for name, (top, right, bottom, left) in predictions:
-    
-       
         cv2.rectangle(image, (left,top), (right,bottom), (10, 255, 0), 4)
             
         # Draw label

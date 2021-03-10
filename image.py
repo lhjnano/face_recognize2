@@ -27,7 +27,6 @@ class ImageFace :
         self.width = self.input_details[0]['shape'][2]
         self.min_conf_threshold = threshold
                 
-        face_detector = dlib.get_frontal_face_detector()
         predictor_68_point_model = face_recognition_models.pose_predictor_model_location()
         self.pose_predictor_68_point = dlib.shape_predictor(predictor_68_point_model)
         
@@ -76,7 +75,7 @@ class ImageFace :
         
         
     
-    def _css_to_rect(css):
+    def _css_to_rect(self, css):
         """
         Convert a tuple in (top, right, bottom, left) order to a dlib `rect` object
         :param css:  plain tuple representation of the rect in (top, right, bottom, left) order
@@ -85,18 +84,16 @@ class ImageFace :
         return dlib.rectangle(css[0], css[1], css[2], css[3])
 
 
-    def _raw_face_landmarks(face_image, face_locations):
-        num_jitters = 1
-        face_locations = [_css_to_rect(face_location) for face_location in face_locations]
-
+    def _raw_face_landmarks(self, face_image, face_locations):
+        face_locations = [self._css_to_rect(face_location) for face_location in face_locations]
         pose_predictor = self.pose_predictor_68_point
-
         return [pose_predictor(face_image, face_location) for face_location in face_locations]
         
     def face_encoding(self, image, locations):
+        num_jitters = 1
         #여러 얼굴 이미지 반환 
-        raw_landmarks = _raw_face_landmarks(image, locations)
-        return [np.array(self.face_encoder.compute_face_descriptor(face_image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks]
+        raw_landmarks = self._raw_face_landmarks(image, locations)
+        return [np.array(self.face_encoder.compute_face_descriptor(image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks]
 
 
 
