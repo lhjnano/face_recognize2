@@ -18,6 +18,7 @@ import time
 import re
 
 FACES = 2
+FACE_THRESHOLD = 0.8
 
 # Define and parse input arguments
 parser = argparse.ArgumentParser()
@@ -114,9 +115,14 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
         # Loop through each training image for the current person
         for img_path in image_files_in_folder(os.path.join(train_dir, class_dir)):
             image = iface.load_image(img_path)
-            images.append(image)
-            
+                        
             face_bounding_boxes = iface.face_locations(image)
+            left = face_bounding_boxes[0][0]
+            top = face_bounding_boxes[0][1]
+            right = face_bounding_boxes[0][2]
+            bottom = face_bounding_boxes[0][3]
+            
+            images.append(image[top:bottom, left:right])
             class_sample_image = image
             if len(face_bounding_boxes) != 1:
                 # If there are no people (or too many people) in a training image, skip the image.
@@ -139,15 +145,15 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
     knn_clf.fit(X, y)
     
     red = (0,0,255)
-    plt.figure(figsize=(20, 20))
     for i in range(len(y)):
         known_face = X[i]
         image = images[i]
-        for j in range(len(known_face)) :
-            point = (known_face[j][0], known_face[j][1])
+        
+        for j in range(int(len(known_face)/2)) :
+            point = (int(known_face[j*2])*imW, int(known_face[j*2+1])*imH)
             image = cv2.line(image, point, point, red, 3)
-        plt.subplot(len(y), 1, i)
-        plt.imshow(image)
+        cv2.imwrite('{}.jpg'.format(i), image)
+        
 
     # Save the trained KNN classifier
     if model_save_path is not None:
