@@ -146,13 +146,19 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
     
     red = (0,0,255)
     for i in range(len(y)):
-        known_face = X[i]
         image = images[i]
+        width = len(image[0])
+        height = len(image)
         
-        for j in range(int(len(known_face)/2)) :
-            point = (int(known_face[j*2])*imW, int(known_face[j*2+1])*imH)
-            image = cv2.line(image, point, point, red, 3)
-        cv2.imwrite('{}.jpg'.format(i), image)
+        face_landmarks_list = iface.face_landmarks(image, [[0, 0, width, height]])
+        pil_image = Image.fromarray(image)
+        d = ImageDraw.Draw(pil_image)  
+        for face_landmarks in face_landmarks_list:
+            # Let's trace out each facial feature in the image with a line!
+            for facial_feature in face_landmarks.keys():
+                d.line(face_landmarks[facial_feature], width=5)
+        
+        cv2.imwrite('{}.jpg'.format(i), np.array(pil_image))
         
 
     # Save the trained KNN classifier
@@ -201,7 +207,7 @@ def reco_faces(image, imgW, imgH) :
             bottom= int(min(imgH,(boxes[i][2] * imgH)))
             right = int(min(imgW,(boxes[i][3] * imgW)))
 
-            locations.append( (top, right, bottom, left) )
+            locations.append( (left, top,right, bottom ) )
     return locations
 
 
@@ -226,7 +232,7 @@ def show_prediction(image, predictions, is_showing=False) :
 
     #frame_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    for name, (top, right, bottom, left) in predictions:
+    for name, (left, top, right, bottom) in predictions:
         cv2.rectangle(image, (left,top), (right,bottom), (10, 255, 0), 4)
             
         # Draw label
