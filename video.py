@@ -259,7 +259,9 @@ def show_prediction(image, predictions, is_showing=False) :
     #        else :
     #            cv2.line(image, face_landmarks[facial_feature][0], face_landmarks[facial_feature][1], (255, 255, 255), 2)
     if is_showing :
-        cv2.imshow('Object detector', image)
+        plt.figure(figsize=(20, 20)) 
+        plt.imshow(image)
+        #cv2.imshow('Object detector', image)
         
     return image
     
@@ -279,6 +281,8 @@ output_file = cv2.VideoWriter(
         frameSize=(int(imW), int(imH)),
         isColor=True)
 
+shot = False
+timestamp = 1
 while(video.isOpened()):
 	
     # Acquire frame and resize to expected shape [1xHxWx3]
@@ -287,11 +291,13 @@ while(video.isOpened()):
       print('Reached the end of the video!')
       break
       
-      
+    timestamp = timestamp + 1
+    if timestamp == 1:
+        shot = True
     
     locations = reco_faces(frame, imW, imH)
     predictions = predict_faces(fnn_clf, frame, locations)
-    prediction_frame = show_prediction(frame, predictions, True)
+    prediction_frame = show_prediction(frame, predictions, shot)
     
     output_file.write(prediction_frame)
     if cv2.waitKey(1) == ord('q'):
