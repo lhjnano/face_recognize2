@@ -144,21 +144,21 @@ def train(train_dir, model_save_path=None, n_neighbors=None, knn_algo='ball_tree
     knn_clf = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm=knn_algo, weights='distance', )
     knn_clf.fit(X, y)
     
-    red = (0,0,255)
-    for i in range(len(y)):
-        image = images[i]
-        width = len(image[0])
-        height = len(image)
-        
-        face_landmarks_list = iface.face_landmarks(image, [[0, 0, width, height]])
-        pil_image = Image.fromarray(image)
-        d = ImageDraw.Draw(pil_image)  
-        for face_landmarks in face_landmarks_list:
-            # Let's trace out each facial feature in the image with a line!
-            for facial_feature in face_landmarks.keys():
-                d.line(face_landmarks[facial_feature], width=5)
-        
-        cv2.imwrite('{}.jpg'.format(i), np.array(pil_image))
+    #red = (0,0,255)
+    #for i in range(len(y)):
+    #    image = images[i]
+    #    width = len(image[0])
+    #    height = len(image)
+    #    
+    #    face_landmarks_list = iface.face_landmarks(image, [[0, 0, width, height]])
+    #    pil_image = Image.fromarray(image)
+    #    d = ImageDraw.Draw(pil_image)  
+    #    for face_landmarks in face_landmarks_list:
+    #        # Let's trace out each facial feature in the image with a line!
+    #        for facial_feature in face_landmarks.keys():
+    #            d.line(face_landmarks[facial_feature], width=5)
+    #    
+    #    cv2.imwrite('{}.jpg'.format(i), np.array(pil_image))
         
 
     # Save the trained KNN classifier
@@ -291,7 +291,7 @@ while(video.isOpened()):
     
     locations = reco_faces(frame, imW, imH)
     predictions = predict_faces(fnn_clf, frame, locations)
-    prediction_frame = show_prediction(frame, predictions)
+    prediction_frame = show_prediction(frame, predictions, True)
     
     output_file.write(prediction_frame)
     if cv2.waitKey(1) == ord('q'):
